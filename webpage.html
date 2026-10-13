@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101522">
+    <title>Anshuman's AI</title>
+    <style>
+        :root { color-scheme:dark; --bg:#101522; --panel:#0b101b; --surface:#1b2435; --surface-hover:#242f45; --text:#f3f4fb; --muted:#9aa5bb; --line:#293348; --accent:#b9a5ff; --accent-soft:#292343; --teal:#83dfd0; }
+        * { box-sizing:border-box; }
+        body { margin:0; min-height:100vh; background:var(--bg); color:var(--text); font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
+        button, textarea { font:inherit; }
+        button { color:inherit; }
+        .app { min-height:100vh; display:flex; }
+        .sidebar { width:260px; flex:0 0 260px; background:linear-gradient(180deg,#0d1422 0%,var(--panel) 72%); border-right:1px solid #202a3b; padding:18px 14px; display:flex; flex-direction:column; gap:20px; transition:transform .2s ease; z-index:5; }
+        .brand { display:flex; align-items:center; gap:10px; padding:4px 8px; font-weight:650; letter-spacing:.01em; }
+        .brand-mark { width:30px; height:30px; display:grid; place-items:center; border-radius:11px; background:linear-gradient(145deg,var(--accent),#83d9d0); color:#17152b; font-size:17px; box-shadow:0 4px 18px #9f8aff35; }
+        .new-chat { display:flex; align-items:center; gap:10px; width:100%; padding:10px 12px; border:1px solid #36435c; border-radius:11px; background:#ffffff06; text-align:left; cursor:pointer; }
+        .new-chat:hover,.history-item:hover { background:var(--surface); }
+        .sidebar-label { margin:4px 8px 0; color:var(--muted); font-size:12px; font-weight:600; }
+        .history { display:flex; flex-direction:column; gap:4px; overflow:auto; }
+        .history-item { display:block; width:100%; overflow:hidden; padding:9px 10px; border:0; border-radius:9px; background:transparent; text-align:left; text-overflow:ellipsis; white-space:nowrap; color:#c6cde0; cursor:pointer; }
+        .sidebar-note { margin-top:auto; padding:12px; border:1px solid var(--line); border-radius:12px; color:var(--muted); font-size:12px; }
+        .main { min-width:0; min-height:100vh; flex:1; display:flex; flex-direction:column; align-items:center; position:relative; background:radial-gradient(ellipse at 52% 40%,#29234355 0%,transparent 48%),radial-gradient(ellipse at 88% 5%,#174b4a22 0%,transparent 35%),var(--bg); }
+        .topbar { width:100%; height:62px; display:flex; align-items:center; justify-content:space-between; padding:0 22px; }
+        .top-left { display:flex; align-items:center; gap:12px; color:#e9e8f5; font-weight:600; }
+        .menu-button { display:none; border:0; background:transparent; font-size:21px; cursor:pointer; }
+        .model-label { color:var(--muted); font-weight:400; }
+        .demo-badge { padding:5px 10px; border:1px solid #35445a; border-radius:999px; background:#ffffff06; color:#b4c5da; font-size:12px; }
+        .conversation { width:min(100%,800px); flex:1; padding:30px 24px 22px; overflow:auto; scroll-behavior:smooth; }
+        .welcome { min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px 0 45px; }
+        .welcome-icon { width:54px; height:54px; display:grid; place-items:center; margin-bottom:18px; border:1px solid #4b426e; border-radius:18px; background:linear-gradient(145deg,#292343,#18313a); color:#d9d0ff; font-size:27px; box-shadow:0 10px 40px #a98aff18; }
+        h1 { margin:0 0 24px; font-size:32px; font-weight:560; letter-spacing:-.045em; background:linear-gradient(95deg,#f4f1ff 20%,#c5b5ff 62%,#a5e8dc); color:transparent; background-clip:text; }
+        .suggestions { width:min(100%,660px); display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+        .suggestion { min-height:72px; padding:13px 15px; border:1px solid #303b52; border-radius:14px; background:linear-gradient(145deg,#1a2232b8,#141c2a); color:#e1e4f1; text-align:left; cursor:pointer; transition:transform .18s,border-color .18s,background .18s; }
+        .suggestion:hover { background:linear-gradient(145deg,#242d43,#192735); border-color:#7669a8; transform:translateY(-2px); }
+        .suggestion strong { display:block; margin-bottom:3px; font-weight:550; }
+        .suggestion span { color:var(--muted); font-size:13px; }
+        .message { display:flex; gap:14px; margin:0 auto 26px; max-width:700px; align-items:flex-start; }
+        .avatar { flex:0 0 30px; width:30px; height:30px; display:grid; place-items:center; border-radius:10px; background:#26334a; color:#cfdbf1; font-size:13px; font-weight:650; }
+        .message.assistant .avatar { background:var(--accent-soft); color:#d2c5ff; }
+        .message.pending .message-content { color:#aeb8cb; }
+        .message-content { min-width:0; flex:1; padding-top:3px; white-space:pre-wrap; overflow-wrap:anywhere; }
+        .message-name { margin-bottom:4px; color:#aab4cb; font-size:12px; }
+        .composer-wrap { width:min(100%,800px); padding:0 24px 20px; }
+        .composer { display:flex; align-items:flex-end; gap:10px; padding:10px 11px 10px 17px; border:1px solid #36435a; border-radius:24px; background:linear-gradient(145deg,#1d2738,#171e2c); box-shadow:0 12px 38px #05081255; }
+        .composer:focus-within { border-color:#8876c4; box-shadow:0 0 0 3px #9b88ed1c,0 12px 38px #05081255; }
+        textarea { width:100%; max-height:180px; min-height:27px; resize:none; overflow-y:auto; padding:2px 0; border:0; outline:0; background:transparent; color:var(--text); line-height:1.55; }
+        textarea::placeholder { color:#8792aa; }
+        .send { flex:0 0 36px; width:36px; height:36px; display:grid; place-items:center; border:0; border-radius:13px; background:linear-gradient(145deg,var(--accent),#8bddd2); color:#171528; font-size:19px; cursor:pointer; transition:opacity .15s,transform .15s; }
+        .send:not(:disabled):hover { transform:translateY(-1px); }
+        .send:disabled { opacity:.4; cursor:default; }
+        .hint { margin:9px 0 0; color:#7f8aa2; text-align:center; font-size:11px; }
+        .actions { display:flex; justify-content:center; gap:8px; margin-top:10px; }
+        .text-button { padding:5px 9px; border:0; border-radius:7px; background:transparent; color:#95a0b6; font-size:12px; cursor:pointer; }
+        .text-button:hover { background:#222c40; color:#e6e3f5; }
+        .empty-history { padding:8px; color:#77839a; font-size:13px; }
+        .toast { position:fixed; bottom:110px; left:50%; transform:translateX(-50%); padding:9px 14px; border:1px solid #3c4860; border-radius:10px; background:#1c2637; color:#eee; font-size:13px; opacity:0; pointer-events:none; transition:opacity .2s; }
+        .toast.show { opacity:1; }
+        .backdrop { display:none; }
+        @media(max-width:700px) {
+            .sidebar { position:fixed; inset:0 auto 0 0; width:280px; transform:translateX(-100%); box-shadow:12px 0 40px #0005; }
+            .sidebar.open { transform:translateX(0); }
+            .backdrop.show { display:block; position:fixed; inset:0; z-index:4; background:#0008; }
+            .menu-button { display:block; }
+            .topbar { height:58px; padding:0 14px; }
+            .conversation { padding:15px 16px; }
+            .composer-wrap { padding:0 12px 12px; }
+            .welcome { padding-bottom:24px; }
+            h1 { font-size:25px; }
+            .suggestions { grid-template-columns:1fr; gap:8px; }
+            .suggestion { min-height:62px; }
+            .message { gap:10px; margin-bottom:22px; }
+        }
+        @media(prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto!important; transition:none!important; } }
+    </style>
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Chat sidebar">
+        <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span><span>Anshuman's AI</span></div>
+        <button class="new-chat" id="newChatButton" type="button"><span aria-hidden="true">＋</span> New chat</button>
+        <div class="sidebar-label">Library</div>
+        <nav class="history" id="history" aria-label="Saved chats"></nav>
+        <div class="sidebar-note">AI responses are generated with OpenAI. Your API key stays on this local server.</div>
+    </aside>
+    <div class="backdrop" id="backdrop"></div>
+    <main class="main">
+        <header class="topbar">
+            <div class="top-left"><button class="menu-button" id="menuButton" type="button" aria-label="Open chat menu">☰</button><span>Anshuman's AI</span><span class="model-label">OpenAI</span></div>
+            <span class="demo-badge" id="apiStatus">Checking API…</span>
+        </header>
+        <section class="conversation" id="conversation" aria-live="polite" aria-label="Conversation">
+            <div class="welcome" id="welcome">
+                <div class="welcome-icon" aria-hidden="true">✳</div>
+                <h1>What can I help with?</h1>
+                <div class="suggestions" aria-label="Try a prompt">
+                    <button class="suggestion" type="button" data-prompt="Explain HTML, CSS, and JavaScript"><strong>Explain web basics</strong><span>HTML, CSS, and JavaScript</span></button>
+                    <button class="suggestion" type="button" data-prompt="Give me three ideas for a creative weekend"><strong>Brainstorm ideas</strong><span>Find a little inspiration</span></button>
+                    <button class="suggestion" type="button" data-prompt="Write a friendly email asking to reschedule a meeting"><strong>Draft an email</strong><span>Keep it clear and friendly</span></button>
+                    <button class="suggestion" type="button" data-prompt="What are some ways to stay focused while working?"><strong>Get practical tips</strong><span>Make a plan for your day</span></button>
+                </div>
+            </div>
+            <div id="messages"></div>
+        </section>
+        <div class="composer-wrap">
+            <form class="composer" id="composer">
+                <textarea id="userInput" rows="1" maxlength="4000" aria-label="Message" placeholder="Message Anshuman's AI..."></textarea>
+                <button class="send" id="sendButton" type="submit" aria-label="Send message" disabled>↑</button>
+            </form>
+        <div class="hint">Enter to send · Shift + Enter for a new line</div>
+            <div class="actions"><button class="text-button" id="exportButton" type="button">Export chat</button><button class="text-button" id="clearButton" type="button">Clear chat</button></div>
+        </div>
+    </main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+    const STORAGE_KEY = 'chat-demo-conversations-v1';
+    const messagesEl = document.getElementById('messages');
+    const conversationEl = document.getElementById('conversation');
+    const welcomeEl = document.getElementById('welcome');
+    const input = document.getElementById('userInput');
+    let chats = loadChats();
+    // Start on a clean home screen after every page load. Saved chats remain in the library.
+    let activeId = null;
+    let toastTimer;
+
+    function loadChats() {
+        try { const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); return Array.isArray(saved) ? saved.filter(c => c && typeof c.id === 'string' && Array.isArray(c.messages)) : []; }
+        catch { return []; }
+    }
+    function save() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(chats.slice(0, 30))); }
+        catch { showToast('Could not save chat in this browser.'); }
+    }
+    function currentChat() { return chats.find(chat => chat.id === activeId); }
+    function escapeHTML(value) { return value.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function render() {
+        const chat = currentChat();
+        messagesEl.replaceChildren();
+        if (chat) chat.messages.forEach(message => appendMessage(message.role, message.text, false));
+        welcomeEl.hidden = !!(chat && chat.messages.length);
+        renderHistory();
+        conversationEl.scrollTop = conversationEl.scrollHeight;
+    }
+    function appendMessage(role, text, scroll = true) {
+        const row = document.createElement('article');
+        row.className = `message ${role}`;
+        const avatar = document.createElement('div'); avatar.className = 'avatar'; avatar.textContent = role === 'user' ? 'Y' : '✳'; avatar.setAttribute('aria-hidden','true');
+        const content = document.createElement('div'); content.className = 'message-content';
+        const name = document.createElement('div'); name.className = 'message-name'; name.textContent = role === 'user' ? 'You' : "Anshuman's AI";
+        const body = document.createElement('div'); body.textContent = text;
+        content.append(name, body); row.append(avatar, content); messagesEl.append(row);
+        if (scroll) conversationEl.scrollTo({top:conversationEl.scrollHeight, behavior:'smooth'});
+    }
+    function renderHistory() {
+        const history = document.getElementById('history'); history.replaceChildren();
+        const savedChats = [...chats].sort((a,b) => b.updated - a.updated);
+        if (!savedChats.length) { const empty = document.createElement('div'); empty.className='empty-history'; empty.textContent='Your saved chats will appear here'; history.append(empty); return; }
+        savedChats.forEach(chat => { const button = document.createElement('button'); button.type='button'; button.className='history-item'; button.textContent=chat.title || 'New chat'; button.title=button.textContent; button.setAttribute('aria-current', chat.id === activeId ? 'page' : 'false'); button.addEventListener('click', () => { activeId=chat.id; render(); closeSidebar(); }); history.append(button); });
+    }
+    function showToast(text) { const toast=document.getElementById('toast'); toast.textContent=text; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>toast.classList.remove('show'),2200); }
+    async function readApiResponse(response) {
+        let body;
+        try { body = await response.text(); }
+        catch { throw new Error(`Could not read the server response (HTTP ${response.status}).`); }
+        if (!body.trim()) throw new Error(`The server returned an empty response (HTTP ${response.status}). Restart it with npm start and open this page at http://localhost:3000.`);
+        let data;
+        try { data = JSON.parse(body); }
+        catch { throw new Error(`The server returned invalid JSON (HTTP ${response.status}). Make sure the Express server is running on port 3000.`); }
+        if (!response.ok) throw new Error(data.error || `The server request failed (HTTP ${response.status}).`);
+        return data;
+    }
+    function explainConnectionError(error) {
+        if (error instanceof TypeError) return 'Cannot reach the local server. Run npm start and open http://localhost:3000.';
+        return error.message || 'The request failed unexpectedly.';
+    }
+    async function sendMessage(text = input.value) {
+        const message = text.trim(); if (!message) return;
+        if (!currentChat()) { activeId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())); chats.unshift({id:activeId,title:message.slice(0,42),updated:Date.now(),messages:[]}); }
+        const chat=currentChat(); chat.messages.push({role:'user',text:message}); chat.updated=Date.now();
+        if (chat.title === 'New chat') chat.title=message.slice(0,42);
+        input.value=''; resizeInput(); document.getElementById('sendButton').disabled=true; input.disabled=true;
+        save(); render();
+        const pending=document.createElement('article'); pending.className='message assistant pending'; pending.id='pendingMessage';
+        const pendingAvatar=document.createElement('div'); pendingAvatar.className='avatar'; pendingAvatar.setAttribute('aria-hidden','true'); pendingAvatar.textContent='✳';
+        const pendingText=document.createElement('div'); pendingText.className='message-content'; pendingText.textContent='Thinking…'; pending.append(pendingAvatar,pendingText); messagesEl.append(pending); conversationEl.scrollTop=conversationEl.scrollHeight;
+        try {
+            const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chat.messages.slice(-40).map(({role,text})=>({role,content:text}))})});
+            const data=await readApiResponse(response);
+            if(typeof data.reply!=='string' || !data.reply.trim()) throw new Error('The API returned an empty reply.');
+            chat.messages.push({role:'assistant',text:data.reply});
+        } catch(error) {
+            chat.messages.push({role:'assistant',text:`Sorry, I couldn’t get a response. ${explainConnectionError(error)}`});
+        } finally {
+            chat.updated=Date.now(); save(); render(); input.disabled=false; input.focus();
+        }
+    }
+    function newChat() { activeId=null; save(); input.value=''; resizeInput(); render(); closeSidebar(); input.focus(); }
+    function resizeInput() { input.style.height='auto'; input.style.height=Math.min(input.scrollHeight,180)+'px'; }
+    function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('backdrop').classList.remove('show'); }
+    document.getElementById('composer').addEventListener('submit', event => { event.preventDefault(); sendMessage(); });
+    input.addEventListener('input', () => { resizeInput(); document.getElementById('sendButton').disabled=!input.value.trim(); });
+    input.addEventListener('keydown', event => { if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); } });
+    document.querySelectorAll('[data-prompt]').forEach(button => button.addEventListener('click', () => sendMessage(button.dataset.prompt)));
+    document.getElementById('newChatButton').addEventListener('click', newChat);
+    document.getElementById('clearButton').addEventListener('click', () => { if (!currentChat()) { showToast('This chat is already empty.'); return; } chats=chats.filter(chat=>chat.id!==activeId); activeId=null; save(); render(); showToast('Chat cleared.'); });
+    document.getElementById('exportButton').addEventListener('click', () => {
+        const chat=currentChat(); if(!chat || !chat.messages.length) { showToast('There is no conversation to export.'); return; }
+        const content=chat.messages.map(m=>`${m.role==='user'?'You':"Anshuman's AI"}:\n${m.text}`).join('\n\n');
+        const url=URL.createObjectURL(new Blob([content],{type:'text/plain;charset=utf-8'})); const link=document.createElement('a'); link.href=url; link.download=`chat-${new Date(chat.updated).toISOString().slice(0,10)}.txt`; link.click(); URL.revokeObjectURL(url); showToast('Chat exported.');
+    });
+    document.getElementById('menuButton').addEventListener('click', () => { document.getElementById('sidebar').classList.add('open'); document.getElementById('backdrop').classList.add('show'); });
+    document.getElementById('backdrop').addEventListener('click', closeSidebar);
+    fetch('/api/status').then(readApiResponse).then(status => {
+        const badge=document.getElementById('apiStatus');
+        badge.textContent=status.configured ? `API ready · ${status.model}` : 'API key missing';
+        badge.title=status.configured ? 'Server has an API key configured.' : 'Add OPENAI_API_KEY to .env, then restart the server.';
+        if(!status.configured) badge.style.color='#f0c987';
+    }).catch(error => {
+        const badge=document.getElementById('apiStatus'); badge.textContent='API unavailable';
+        badge.title=explainConnectionError(error); badge.style.color='#f0a0a0';
+    });
+    render();
+</script>
+</body>
+</html>
